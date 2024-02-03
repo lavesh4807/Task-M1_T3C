@@ -1,0 +1,56 @@
+#define pirPin 2
+#define photoresistorPin A0
+#define buttonPin 3
+#define ledPin 6
+#define buzzerPin 7
+
+volatile bool isMotionDetected = false;
+volatile bool isButtonPressed = false;
+
+void interruptPIR() {
+    isMotionDetected = true;
+}
+
+void interruptButton() {
+    isButtonPressed = true;
+}
+
+void setup() {
+    pinMode(pirPin, INPUT);
+    pinMode(photoresistorPin, INPUT);
+    pinMode(buttonPin, INPUT_PULLUP);
+    pinMode(ledPin, OUTPUT);
+    pinMode(buzzerPin, OUTPUT);
+
+    Serial.begin(9600);
+
+    attachInterrupt(digitalPinToInterrupt(pirPin), interruptPIR, RISING);
+    attachInterrupt(digitalPinToInterrupt(buttonPin), interruptButton, FALLING);
+}
+
+void loop() {
+    if (isMotionDetected) {
+        digitalWrite(ledPin, HIGH);
+        Serial.println("Motion detected! Turning on LED.");
+        isMotionDetected = false;
+    } else {
+        digitalWrite(ledPin, LOW);
+        Serial.println("No motion detected. Turning off LED.");
+    }
+
+    int lightIntensity = analogRead(photoresistorPin);
+    Serial.print("Light Intensity: ");
+    Serial.println(lightIntensity);
+
+    if (isButtonPressed && lightIntensity > 800) {
+        digitalWrite(buzzerPin, HIGH);
+        Serial.println("High light intensity! Activating buzzer.");
+        delay(1000); // Adjust the delay based on your preference
+        digitalWrite(buzzerPin, LOW);
+        Serial.println("Buzzer turned off.");
+    }
+
+    isButtonPressed = false;
+
+    delay(1000);
+}
